@@ -1,0 +1,33 @@
+{
+  "name": "stockpro",
+  "description": "Système de gestion de stock PHP/MySQL",
+  "version": "1.0.0",
+  "type": "library",
+  "license": "proprietary",
+  "keywords": ["stock", "inventory", "management", "php", "mysql"],
+  "authors": [
+    {
+      "name": "StockPro Team",
+      "email": "info@stockpro.local"
+    }
+  ],
+  "require": {
+    "php": ">=7.4.0"
+  },
+  "require-dev": {
+    "phpunit/phpunit": "^9.0"
+  },
+  "autoload": {
+    "psr-4": {
+      "StockPro\\": "backend/php/"
+    }
+  },
+  "scripts": {
+    "start": "php -S localhost:8080",
+    "test": "phpunit tests/",
+    "build": "echo 'Building project...'"
+  },
+  "config": {
+    "vendor-dir": "vendor"
+  }
+}

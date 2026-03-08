@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StockPro Industrial v2.0</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@300;400;500&family=Exo+2:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="main.css">
+</head>
+<body>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ═══════════════ LOGIN ═══════════════ -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="logo-icon">🏭</div>
+      <h1>STOCKPRO</h1>
+      <p>Industrial v2.0</p>
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <div class="form-group">
+      <label>Identifiant</label>
+      <input type="text" id="loginUser" placeholder="Entrez votre ID" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Mot de passe</label>
+      <input type="password" id="loginPass" placeholder="••••••••">
+    </div>
+    <button class="btn-primary" onclick="doLogin()">CONNEXION</button>
+    <div class="login-version">
+      🔒 Connexion sécurisée · Système multi-utilisateurs
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ SETUP MODAL ═══════════════ -->
+<div class="modal-overlay" id="setupModal" style="display:none;">
+  <div class="modal-box">
+    <h2>🌐 Configuration Initiale</h2>
+    <p class="modal-sub">Bienvenue ! Configurez vos préférences régionales pour votre première connexion.</p>
+    <div class="form-group">
+      <label>Entreprise</label>
+      <input type="text" id="setupCompany" placeholder="Nom de votre entreprise">
+    </div>
+    <div class="modal-grid" style="margin-bottom:16px;">
+      <div class="form-group">
+        <label>Pays</label>
+        <select id="setupCountry" onchange="onCountryChange()"></select>
+      </div>
+      <div class="form-group">
+        <label>Langue</label>
+        <select id="setupLang">
+          <option value="fr">Français</option>
+          <option value="en">English</option>
+          <option value="ar">العربية</option>
+          <option value="es">Español</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Devise</label>
+        <select id="setupCurrency"></select>
+      </div>
+      <div class="form-group">
+        <label>Format de date</label>
+        <select id="setupDateFmt">
+          <option value="DD/MM/YYYY">DD/MM/YYYY</option>
+          <option value="MM/DD/YYYY">MM/DD/YYYY</option>
+          <option value="YYYY-MM-DD">YYYY-MM-DD</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-group" style="margin-bottom:24px;">
+      <label>Seuil d'alerte stock (%)</label>
+      <input type="range" id="setupThreshold" min="5" max="50" value="20" oninput="this.nextElementSibling.textContent=this.value+'%'">
+      <span style="font-family:var(--font-mono);font-size:13px;color:var(--amber);display:block;margin-top:4px;">20%</span>
+    </div>
+    <button class="btn-primary" onclick="saveSetup()">CONFIRMER LA CONFIGURATION</button>
+  </div>
+</div>
+
+<!-- ═══════════════ APP SHELL ═══════════════ -->
+<div id="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">
+        <div class="logo-icon-sm">🏭</div>
+        <div>
+          <h2>StockPro</h2>
+          <span>Industrial</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="sidebar-user">
+      <div class="user-info">
+        <div class="user-avatar" id="sidebarAvatar">DG</div>
+        <div>
+          <div class="user-name" id="sidebarName">Directeur Général</div>
+          <div class="user-role" id="sidebarRole">Administrateur</div>
+        </div>
+        <div class="online-dot"></div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="nav-section-title">Navigation</div>
+      <div class="nav-item active" onclick="showView('dashboard')">
+        <span class="nav-icon">📊</span> Tableau de Bord
+      </div>
+      <div class="nav-item" onclick="showView('materials')">
+        <span class="nav-icon">📦</span> Matières Premières
+      </div>
+      <div class="nav-item" onclick="showView('transactions')">
+        <span class="nav-icon">🔄</span> Mouvements
+      </div>
+      <div class="nav-item" onclick="showView('reports')">
+        <span class="nav-icon">📈</span> Rapports
+      </div>
+
+      <div class="nav-section-title" style="margin-top:8px;">Monitoring</div>
+      <div class="nav-item" onclick="showView('alerts')">
+        <span class="nav-icon">🔔</span> Alertes
+        <span class="nav-badge" id="alertBadge" style="display:none;">0</span>
+      </div>
+      <div class="nav-item stock-manager-only" onclick="showView('entry')" style="display:none;">
+        <span class="nav-icon">📥</span> Entrée Stock
+      </div>
+      <div class="nav-item stock-manager-only" onclick="showView('exit')" style="display:none;">
+        <span class="nav-icon">📤</span> Sortie Stock
+      </div>
+
+      <div class="nav-section-title" style="margin-top:8px;">Administration</div>
+      <div class="nav-item admin-only" onclick="showView('add-material')" style="display:none;">
+        <span class="nav-icon">➕</span> Ajouter Matière
+      </div>
+      <div class="nav-item" onclick="showView('settings')">
+        <span class="nav-icon">⚙️</span> Paramètres
+      </div>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="company-info">
+        <strong id="sidebarCompany">—</strong>
+        <span id="sidebarCountry" style="font-size:11px;color:var(--text-muted);">Système de gestion</span>
+      </div>
+      <button class="btn-sm btn-ghost" onclick="doLogout()" style="margin-top:10px;width:100%;justify-content:center;color:var(--red);">
+        ⏏ Déconnexion
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title" id="topbarTitle">Tableau de Bord</div>
+      <div class="topbar-time" id="topbarTime"></div>
+      <div class="topbar-actions" id="topbarActions"></div>
+    </div>
+
+    <div class="content">
+
+      <!-- ── DASHBOARD ── -->
+      <div class="view active" id="view-dashboard"></div>
+
+      <!-- ── MATERIALS ── -->
+      <div class="view" id="view-materials"></div>
+
+      <!-- ── MATERIAL DETAIL ── -->
+      <div class="view" id="view-mat-detail"></div>
+
+      <!-- ── TRANSACTIONS ── -->
+      <div class="view" id="view-transactions"></div>
+
+      <!-- ── ENTRY FORM ── -->
+      <div class="view" id="view-entry"></div>
+
+      <!-- ── EXIT FORM ── -->
+      <div class="view" id="view-exit"></div>
+
+      <!-- ── ADD MATERIAL ── -->
+      <div class="view" id="view-add-material"></div>
+
+      <!-- ── REPORTS ── -->
+      <div class="view" id="view-reports"></div>
+
+      <!-- ── ALERTS ── -->
+      <div class="view" id="view-alerts"></div>
+
+      <!-- ── SETTINGS ── -->
+      <div class="view" id="view-settings"></div>
+
+    </div><!-- /content -->
+  </main>
+</div><!-- /app -->
+
+<!-- SCRIPTS -->
+<script src="constants.js"></script>
+<script src="app.js"></script>
+<script src="script.js"></script>
+<script src="auth.js"></script>
+<script src="loader.js"></script>
+<script src="pages.js"></script>
+<script src="dashboard.js"></script>
+<script src="materials.js"></script>
+<script src="mat-detail.js"></script>
+<script src="transactions.js"></script>
+<script src="alerts.js"></script>
+<script src="reports.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+

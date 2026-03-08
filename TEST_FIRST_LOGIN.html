@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Test - Détection Première Connexion</title>
+  <style>
+    body {
+      font-family: 'Arial', sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      background: #f5f5f5;
+    }
+    .test-box {
+      background: white;
+      padding: 20px;
+      margin: 10px 0;
+      border-left: 4px solid #2196F3;
+      border-radius: 4px;
+    }
+    .test-box.pass {
+      border-left-color: #4CAF50;
+    }
+    .test-box.fail {
+      border-left-color: #f44336;
+    }
+    .test-box h3 {
+      margin: 0 0 10px 0;
+      color: #333;
+    }
+    .test-box code {
+      display: block;
+      background: #f0f0f0;
+      padding: 10px;
+      margin: 10px 0;
+      border-radius: 3px;
+      font-size: 12px;
+      overflow-x: auto;
+    }
+    .result {
+      padding: 10px;
+      background: #f9f9f9;
+      border-radius: 3px;
+      margin: 10px 0;
+      font-family: monospace;
+    }
+    button {
+      background: #2196F3;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      margin: 5px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #1976D2;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧪 Tests - Détection Première Connexion StockPro</h1>
+  
+  <div class="test-box">
+    <h3>📋 Instructions de test</h3>
+    <p>Cette page teste les fonctions de détection de première connexion.</p>
+    <p>Pour tester correctement:</p>
+    <ol>
+      <li>Connectez-vous normalement à l'app StockPro</li>
+      <li>Une fois connecté, ouvrez cette page dans un nouvel onglet</li>
+      <li>Exécutez les tests ci-dessous</li>
+    </ol>
+  </div>
+
+  <div id="testResults"></div>
+
+  <script>
+    function runTests() {
+      const results = [];
+      const output = document.getElementById('testResults');
+      
+      // Test 1: Accès aux fonctions
+      results.push({
+        name: '✅ Test 1: Fonctions disponibles?',
+        pass: typeof window.getFirstLoginInfo === 'function' &&
+              typeof window.isNewUser === 'function' &&
+              typeof window.getUserLoginDates === 'function',
+        code: `
+typeof window.getFirstLoginInfo === 'function' &&
+typeof window.isNewUser === 'function' &&
+typeof window.getUserLoginDates === 'function'
+        `
+      });
+
+      // Test 2: Vérifier localStorage
+      const hasFirstLogin = Object.keys(localStorage).some(k => k.includes('first_login'));
+      results.push({
+        name: '✅ Test 2: Données localStorage sauvegardées?',
+        pass: hasFirstLogin,
+        code: `Clés contenant 'first_login' trouvées: ${hasFirstLogin}`,
+        details: Object.keys(localStorage)
+          .filter(k => k.includes('first_login'))
+          .map(k => `${k} = ${localStorage[k]}`)
+          .join('\n')
+      });
+
+      // Test 3: État APP
+      if (typeof window.APP !== 'undefined') {
+        results.push({
+          name: '✅ Test 3: APP.isFirstLogin défini?',
+          pass: typeof window.APP.isFirstLogin !== 'undefined',
+          code: `APP.isFirstLogin = ${window.APP.isFirstLogin}`,
+          details: JSON.stringify({
+            currentUser: window.APP.currentUser?.id,
+            isFirstLogin: window.APP.isFirstLogin
+          }, null, 2)
+        });
+
+        // Test 4: Exécuter getFirstLoginInfo
+        if (typeof window.getFirstLoginInfo === 'function') {
+          try {
+            const info = window.getFirstLoginInfo();
+            results.push({
+              name: '✅ Test 4: getFirstLoginInfo() exécutable?',
+              pass: info !== null,
+              code: 'getFirstLoginInfo()',
+              details: JSON.stringify(info, null, 2)
+            });
+          } catch (e) {
+            results.push({
+              name: '❌ Test 4: getFirstLoginInfo() erreur',
+              pass: false,
+              error: e.message
+            });
+          }
+        }
+
+        // Test 5: Exécuter isNewUser
+        if (typeof window.isNewUser === 'function') {
+          try {
+            const isNew = window.isNewUser();
+            results.push({
+              name: '✅ Test 5: isNewUser() exécutable?',
+              pass: typeof isNew === 'boolean',
+              code: 'isNewUser()',
+              details: `Résultat: ${isNew}`
+            });
+          } catch (e) {
+            results.push({
+              name: '❌ Test 5: isNewUser() erreur',
+              pass: false,
+              error: e.message
+            });
+          }
+        }
+
+        // Test 6: Exécuter getUserLoginDates
+        if (typeof window.getUserLoginDates === 'function') {
+          try {
+            const dates = window.getUserLoginDates();
+            results.push({
+              name: '✅ Test 6: getUserLoginDates() exécutable?',
+              pass: Array.isArray(dates),
+              code: 'getUserLoginDates()',
+              details: `${dates.length} dates enregistrées:\n${dates.join('\n')}`
+            });
+          } catch (e) {
+            results.push({
+              name: '❌ Test 6: getUserLoginDates() erreur',
+              pass: false,
+              error: e.message
+            });
+          }
+        }
+      } else {
+        results.push({
+          name: '⚠️  APP non disponible',
+          pass: false,
+          error: 'Assurez-vous que vous êtes connecté à l\'application'
+        });
+      }
+
+      // Afficher résultats
+      output.innerHTML = '';
+      results.forEach(test => {
+        const box = document.createElement('div');
+        box.className = `test-box ${test.pass ? 'pass' : 'fail'}`;
+        
+        let html = `<h3>${test.name}</h3>`;
+        if (test.code) html += `<code>${test.code}</code>`;
+        if (test.details) html += `<div class="result">${test.details.replace(/\n/g, '<br>')}</div>`;
+        if (test.error) html += `<div class="result" style="color: red;">Erreur: ${test.error}</div>`;
+        
+        box.innerHTML = html;
+        output.appendChild(box);
+      });
+
+      // Résumé
+      const passed = results.filter(r => r.pass).length;
+      const summary = document.createElement('div');
+      summary.className = 'test-box pass';
+      summary.innerHTML = `<h3>📊 Résumé: ${passed}/${results.length} tests réussis</h3>`;
+      output.insertBefore(summary, output.firstChild);
+    }
+
+    // Auto-run on page load
+    window.addEventListener('load', runTests);
+
+    // Add button to re-run
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.createElement('button');
+      btn.textContent = '🔄 Relancer les tests';
+      btn.onclick = runTests;
+      document.querySelector('body').insertBefore(btn, document.querySelector('#testResults'));
+    });
+  </script>
+</body>
+</html>
